@@ -6,8 +6,8 @@
     <title>Aplikasi Generator Indikator Mutu Puskesmas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- jsPDF & AutoTable for Native, Lightweight, Vector PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     
@@ -32,225 +32,280 @@
         /* Print specific adjustments */
         .pdf-print-mode { width: 900px !important; max-width: none !important; padding: 40px !important; background: white !important; }
         .pdf-print-mode button { display: none !important; }
+        /* CSS Anti Copy-Paste Sederhana untuk User Biasa */
+        .no-select {
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-blue-800">Generator Indikator Mutu ILP</h1>
-            <p class="text-gray-600 mt-2">Buat IMPP dan turunkan menjadi IMPPel berdasarkan Hierarki Pelayanan Kesehatan Primer.</p>
-        </header>
-
-        <!-- Status Acuan Aktif -->
-        <div id="active-impp-status" class="hidden mb-6 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-                <span class="font-bold">IMPP Acuan Aktif:</span>
-                <span id="active-impp-title-display" class="italic ml-1">-</span>
-            </div>
-            <div class="flex items-center space-x-3">
-                <span id="collection-counter" class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-semibold">0 IMPPel Tersimpan</span>
-                <button onclick="showCollection()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors shadow">Lihat Koleksi</button>
-            </div>
-        </div>
-
-        <!-- Main Selection Screen -->
-        <div id="selection-screen">
+    <div id="loginOverlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900 transition-opacity duration-500 overflow-y-auto py-10">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center mx-4 relative overflow-hidden min-h-[480px]">
             
-            <!-- API Key Configuration (Selalu Tampil di Atas) -->
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-blue-200 mb-8 flex flex-col md:flex-row justify-between gap-4 items-center">
-                <div class="w-full md:w-1/2">
-                    <h2 class="text-lg font-bold text-blue-800 mb-1 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                        Akses AI (Google API Key)
-                    </h2>
-                    <p class="text-xs text-gray-600 mb-1">Dibutuhkan untuk menghasilkan indikator. Jika error/kuota habis, ganti key di sini.</p>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 underline font-medium">Buka Google AI Studio untuk ambil Key gratis &rarr;</a>
-                </div>
-                <div class="w-full md:w-1/2 flex flex-col">
-                    <div class="flex gap-2">
-                        <input type="password" id="api-key-input" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Masukkan API Key Anda...">
-                        <button onclick="saveApiKey()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors text-sm whitespace-nowrap shadow">
-                            Simpan & Cek
-                        </button>
-                    </div>
-                    <div class="flex justify-between items-center mt-2">
-                        <p class="text-[10px] text-gray-500">Model: <span id="active-model-display" class="font-mono text-blue-600 font-semibold">Menunggu konfigurasi...</span></p>
-                        <div id="api-status" class="text-xs font-bold text-right hidden"></div>
-                    </div>
+            <div id="loginFormView" class="absolute inset-0 p-8 transition-transform duration-500 transform translate-x-0 bg-white flex flex-col justify-center">
+                <i class="fas fa-shield-alt text-5xl text-blue-600 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Akses Terbatas</h2>
+                <p class="text-sm text-gray-500 mb-6">Silakan masuk menggunakan akun yang telah di-ACC oleh Admin Dinas Kesehatan.</p>
+
+                <input type="email" id="loginEmail" placeholder="Email Anda" class="w-full border-gray-300 rounded-lg p-3 mb-4 focus:ring-blue-500 bg-gray-50 border text-center font-medium">
+                <input type="password" id="loginPassword" placeholder="Password" class="w-full border-gray-300 rounded-lg p-3 mb-4 focus:ring-blue-500 bg-gray-50 border text-center font-medium">
+
+                <button id="btnLogin" onclick="verifyLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 shadow-md">
+                    <i class="fas fa-sign-in-alt"></i> Masuk Aplikasi
+                </button>
+
+                <p id="loginError" class="text-red-600 text-sm mt-4 hidden bg-red-50 border border-red-100 py-2 px-3 rounded font-medium"></p>
+                <div class="mt-6 border-t pt-4">
+                    <p class="text-sm text-gray-600">Belum memiliki akun? <button onclick="toggleAuthView('register')" class="text-blue-600 font-bold hover:underline focus:outline-none">Daftar di sini</button></p>
                 </div>
             </div>
 
-            <!-- Menu Cards -->
-            <div class="grid md:grid-cols-3 gap-6">
-                <!-- BOX 1 -->
-                <div onclick="startWorkflow('impp')" class="cursor-pointer bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-transparent hover:border-blue-500 relative flex flex-col">
-                    <div class="absolute -top-3 -left-3 bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-md">1</div>
-                    <h2 class="text-xl font-bold text-blue-700 mb-2">Buat IMPP (Makro)</h2>
-                    <p class="text-gray-600 text-sm">Tentukan masalah utama & rumuskan tujuan strategis fasyankes.</p>
-                </div>
-                <!-- BOX 2 -->
-                <div onclick="startWorkflow('imppel')" class="cursor-pointer bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-transparent hover:border-emerald-500 relative flex flex-col">
-                    <div class="absolute -top-3 -left-3 bg-emerald-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-md">2</div>
-                    <h2 class="text-xl font-bold text-emerald-700 mb-2">Buat IMPPel (Unit)</h2>
-                    <p class="text-gray-600 text-sm">Turunkan IMPP menjadi indikator spesifik di tingkat unit/layanan ILP.</p>
-                </div>
-                <!-- BOX 3 (Upload / Koleksi) -->
-                <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-transparent hover:border-amber-500 relative flex flex-col justify-between">
+            <div id="registerFormView" class="absolute inset-0 p-8 transition-transform duration-500 transform translate-x-full bg-white flex flex-col justify-center">
+                <i class="fas fa-user-plus text-4xl text-blue-600 mb-3"></i>
+                <h2 class="text-xl font-bold text-gray-800 mb-1">Daftar Akun Baru</h2>
+                <p class="text-[11px] text-gray-500 mb-5 leading-tight">Akun baru wajib menunggu persetujuan Admin (ACC) sebelum bisa login.</p>
+
+                <div class="space-y-3 text-left">
                     <div>
-                        <div class="absolute -top-3 -left-3 bg-amber-500 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-md">3</div>
-                        <h2 class="text-xl font-bold text-amber-700 mb-2">Unggah & Koleksi</h2>
-                        <p class="text-gray-600 text-sm mb-4">Unggah file PDF/TXT hasil unduhan dari aplikasi ini untuk memulihkan data koleksi indikator.</p>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">NAMA INSTANSI / PUSKESMAS</label>
+                        <input type="text" id="regName" placeholder="Cth: Puskesmas..." class="w-full border-gray-300 rounded p-2 text-sm border">
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <button onclick="document.getElementById('upload-file-input').click()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded shadow-sm transition-colors text-sm">
-                            Unggah File (.pdf / .txt)
-                        </button>
-                        <input type="file" id="upload-file-input" accept=".txt,.pdf" class="hidden" onchange="handleFileUpload(event)">
-                        <button onclick="showCollection()" class="w-full bg-white border border-amber-400 text-amber-700 hover:bg-amber-50 font-bold py-2 px-3 rounded shadow-sm transition-colors text-sm">
-                            Lihat <span id="main-menu-badge">0</span> Tersimpan
-                        </button>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">EMAIL</label>
+                        <input type="email" id="regEmail" placeholder="Cth: puskesmas@gmail.com" class="w-full border-gray-300 rounded p-2 text-sm border">
                     </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">PASSWORD (Min 6 Karakter)</label>
+                        <input type="password" id="regPassword" placeholder="Buat password baru" class="w-full border-gray-300 rounded p-2 text-sm border">
+                    </div>
+                </div>
+
+                <button id="btnRegister" onclick="registerAccount()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition duration-200 mt-5 shadow-md text-sm">
+                    <i class="fas fa-paper-plane"></i> Kirim Pengajuan
+                </button>
+
+                <p id="regMessage" class="text-sm mt-3 hidden py-2 px-3 rounded font-medium"></p>
+                <div class="mt-4 border-t pt-3">
+                    <p class="text-sm text-gray-600">Sudah punya akun? <button onclick="toggleAuthView('login')" class="text-blue-600 font-bold hover:underline focus:outline-none">Ke Login</button></p>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Workflow Container -->
-        <div id="workflow-container" class="hidden">
-            <button onclick="goHome()" class="mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg inline-flex items-center transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
-                Kembali ke Menu Utama
-            </button>
-            <h2 id="workflow-title" class="text-2xl font-bold text-center mb-8 text-blue-800"></h2>
+    <div id="mainAppWrapper" class="hidden opacity-0 transition-opacity duration-700 w-full no-select">
+        
+        <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+            <div class="flex justify-end mb-4">
+                <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-bold shadow-sm border border-blue-200 flex items-center gap-2">
+                    <i class="fas fa-user-check"></i> <span id="displayUserName">Guest</span>
+                    <span id="displaySisaHari" class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-1"></span>
+                </div>
+            </div>
 
-            <!-- ================= IMPP WORKFLOW ================= -->
-            <div id="impp-workflow" class="space-y-6 hidden">
-                <div id="impp-step-1" class="step-card bg-white p-6 rounded-lg shadow-sm border-2">
-                    <h3 class="font-bold text-lg mb-3 text-blue-600">Langkah 1: Tentukan Area Prioritas</h3>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Kategori Area Prioritas (Wajib)</label>
-                        <div class="space-y-2">
-                             <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Masalah yang sering terjadi (volume tinggi)" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Masalah yang sering terjadi (volume tinggi)</span></label>
-                            <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Proses yang berisiko tinggi (risiko tinggi)" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Proses yang berisiko tinggi (risiko tinggi)</span></label>
-                            <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Proses yang cenderung menimbulkan masalah (problem-prone)" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Proses yang cenderung menimbulkan masalah (problem-prone)</span></label>
-                            <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Kebijakan strategis dari pemerintah atau manajemen fasyankes" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Kebijakan strategis</span></label>
-                            <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Kebutuhan dan harapan pasien/masyarakat" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Kebutuhan dan harapan pasien/masyarakat</span></label>
+            <header class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-blue-800">Generator Indikator Mutu ILP</h1>
+                <p class="text-gray-600 mt-2">Buat IMPP dan turunkan menjadi IMPPel berdasarkan Hierarki Pelayanan Kesehatan Primer.</p>
+            </header>
+
+            <div id="active-impp-status" class="hidden mb-6 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <span class="font-bold">IMPP Acuan Aktif:</span>
+                    <span id="active-impp-title-display" class="italic ml-1">-</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="collection-counter" class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-semibold">0 IMPPel Tersimpan</span>
+                    <button onclick="showCollection()" class="text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors shadow">Lihat Koleksi</button>
+                </div>
+            </div>
+
+            <div id="selection-screen">
+                
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-blue-200 mb-8 flex flex-col md:flex-row justify-between gap-4 items-center">
+                    <div class="w-full md:w-1/2">
+                        <h2 class="text-lg font-bold text-blue-800 mb-1 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                            Akses AI (Google API Key)
+                        </h2>
+                        <p class="text-xs text-gray-600 mb-1">Dibutuhkan untuk menghasilkan indikator. Jika error/kuota habis, ganti key di sini.</p>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 underline font-medium">Buka Google AI Studio untuk ambil Key gratis &rarr;</a>
+                    </div>
+                    <div class="w-full md:w-1/2 flex flex-col">
+                        <div class="flex gap-2">
+                            <input type="password" id="api-key-input" style="-webkit-user-select: text; user-select: text;" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Masukkan API Key Anda...">
+                            <button onclick="saveApiKey()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors text-sm whitespace-nowrap shadow">
+                                Simpan & Cek
+                            </button>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-[10px] text-gray-500">Model: <span id="active-model-display" class="font-mono text-blue-600 font-semibold">Menunggu konfigurasi...</span></p>
+                            <div id="api-status" class="text-xs font-bold text-right hidden"></div>
                         </div>
                     </div>
-                    <div>
-                        <label for="priority-area" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Masalah (Wajib)</label>
-                        <textarea id="priority-area" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="5" placeholder="Jelaskan detail masalah riil di Puskesmas. AI akan menganalisis solusi terbaiknya..."></textarea>
-                    </div>
-                    <button onclick="getImppSuggestions(false)" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Analisis & Dapatkan Saran Judul IMPP</button>
                 </div>
 
-                <div id="impp-step-2" class="step-card bg-white p-6 rounded-lg shadow-sm border-2 hidden">
-                    <h3 class="font-bold text-lg mb-3 text-blue-600">Langkah 2: Pilih Judul IMPP</h3>
-                    <p class="text-sm text-gray-500 mb-4">Pilih salah satu tujuan mutu strategis. Pilihan Anda akan disimpan otomatis sebagai acuan.</p>
-                    <div id="impp-suggestions-list" class="space-y-2"></div>
-                    <div id="impp-loader" class="hidden flex justify-center items-center p-4">
-                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-600 h-10 w-10"></div><p class="ml-4 text-gray-600 font-medium">AI sedang merumuskan sasaran strategis...</p>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div onclick="startWorkflow('impp')" class="cursor-pointer bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-transparent hover:border-blue-500 relative flex flex-col">
+                        <div class="absolute -top-3 -left-3 bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-md">1</div>
+                        <h2 class="text-xl font-bold text-blue-700 mb-2">Buat IMPP (Makro)</h2>
+                        <p class="text-gray-600 text-sm">Tentukan masalah utama & rumuskan tujuan strategis fasyankes.</p>
                     </div>
-                    <div class="mt-6 flex flex-col space-y-3">
-                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                            <label for="custom-impp-title" class="block text-sm font-bold text-blue-800 mb-1">Sesuaikan Judul Pilihan (Bisa Diedit):</label>
-                            <input type="text" id="custom-impp-title" class="w-full p-2 border border-blue-300 rounded focus:ring-blue-500 focus:border-blue-500 bg-white" placeholder="Pilih saran di atas atau ketik judul Anda sendiri...">
+                    <div onclick="startWorkflow('imppel')" class="cursor-pointer bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-transparent hover:border-emerald-500 relative flex flex-col">
+                        <div class="absolute -top-3 -left-3 bg-emerald-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-md">2</div>
+                        <h2 class="text-xl font-bold text-emerald-700 mb-2">Buat IMPPel (Unit)</h2>
+                        <p class="text-gray-600 text-sm">Turunkan IMPP menjadi indikator spesifik di tingkat unit/layanan ILP.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-shadow border-2 border-transparent hover:border-amber-500 relative flex flex-col justify-between">
+                        <div>
+                            <div class="absolute -top-3 -left-3 bg-amber-500 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold shadow-md">3</div>
+                            <h2 class="text-xl font-bold text-amber-700 mb-2">Unggah & Koleksi</h2>
+                            <p class="text-gray-600 text-sm mb-4">Unggah file PDF/TXT hasil unduhan dari aplikasi ini untuk memulihkan data koleksi indikator.</p>
                         </div>
-                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                            <button onclick="getImppSuggestions(true)" class="w-full sm:w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg transition-colors">Saran Lain</button>
-                            <button onclick="generateProfile('impp')" class="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Buat Profil & Simpan Acuan</button>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="document.getElementById('upload-file-input').click()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded shadow-sm transition-colors text-sm">
+                                Unggah File (.pdf / .txt)
+                            </button>
+                            <input type="file" id="upload-file-input" accept=".txt,.pdf" class="hidden" onchange="handleFileUpload(event)">
+                            <button onclick="showCollection()" class="w-full bg-white border border-amber-400 text-amber-700 hover:bg-amber-50 font-bold py-2 px-3 rounded shadow-sm transition-colors text-sm">
+                                Lihat <span id="main-menu-badge">0</span> Tersimpan
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ================= IMPPel WORKFLOW ================= -->
-            <div id="imppel-workflow" class="space-y-6 hidden">
-                <div id="imppel-step-1" class="step-card bg-white p-6 rounded-lg shadow-sm border-2">
-                    <h3 class="font-bold text-lg mb-3 text-emerald-600">Langkah 1: Konfirmasi IMPP Acuan</h3>
-                    <p class="text-sm text-gray-600 mb-3">Indikator unit (IMPPel) harus selaras dan mendukung tercapainya indikator utama (IMPP).</p>
-                    <textarea id="imppel-acuan-text" class="w-full p-3 border border-emerald-300 rounded-md font-semibold text-emerald-900 bg-emerald-50 focus:ring-emerald-500 focus:border-emerald-500" rows="3" placeholder="Belum ada IMPP yang disimpan. Ketik judul IMPP secara manual di sini..."></textarea>
-                    <button onclick="activateStep('imppel-step-2')" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Lanjutkan ke Pemilihan Hierarki ILP</button>
+            <div id="workflow-container" class="hidden">
+                <button onclick="goHome()" class="mb-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg inline-flex items-center transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                    Kembali ke Menu Utama
+                </button>
+                <h2 id="workflow-title" class="text-2xl font-bold text-center mb-8 text-blue-800"></h2>
+
+                <div id="impp-workflow" class="space-y-6 hidden">
+                    <div id="impp-step-1" class="step-card bg-white p-6 rounded-lg shadow-sm border-2">
+                        <h3 class="font-bold text-lg mb-3 text-blue-600">Langkah 1: Tentukan Area Prioritas</h3>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Kategori Area Prioritas (Wajib)</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Masalah yang sering terjadi (volume tinggi)" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Masalah yang sering terjadi (volume tinggi)</span></label>
+                                <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Proses yang berisiko tinggi (risiko tinggi)" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Proses yang berisiko tinggi (risiko tinggi)</span></label>
+                                <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Proses yang cenderung menimbulkan masalah (problem-prone)" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Proses yang cenderung menimbulkan masalah (problem-prone)</span></label>
+                                <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Kebijakan strategis dari pemerintah atau manajemen fasyankes" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Kebijakan strategis</span></label>
+                                <label class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-blue-100 cursor-pointer border"><input type="radio" name="priority_category" value="Kebutuhan dan harapan pasien/masyarakat" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span class="ml-3 text-gray-700">Kebutuhan dan harapan pasien/masyarakat</span></label>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="priority-area" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Masalah (Wajib)</label>
+                            <textarea id="priority-area" style="-webkit-user-select: text; user-select: text;" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="5" placeholder="Jelaskan detail masalah riil di Puskesmas. AI akan menganalisis solusi terbaiknya..."></textarea>
+                        </div>
+                        <button onclick="getImppSuggestions(false)" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Analisis & Dapatkan Saran Judul IMPP</button>
+                    </div>
+
+                    <div id="impp-step-2" class="step-card bg-white p-6 rounded-lg shadow-sm border-2 hidden">
+                        <h3 class="font-bold text-lg mb-3 text-blue-600">Langkah 2: Pilih Judul IMPP</h3>
+                        <p class="text-sm text-gray-500 mb-4">Pilih salah satu tujuan mutu strategis. Pilihan Anda akan disimpan otomatis sebagai acuan.</p>
+                        <div id="impp-suggestions-list" class="space-y-2"></div>
+                        <div id="impp-loader" class="hidden flex justify-center items-center p-4">
+                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-600 h-10 w-10"></div><p class="ml-4 text-gray-600 font-medium">AI sedang merumuskan sasaran strategis...</p>
+                        </div>
+                        <div class="mt-6 flex flex-col space-y-3">
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <label for="custom-impp-title" class="block text-sm font-bold text-blue-800 mb-1">Sesuaikan Judul Pilihan (Bisa Diedit):</label>
+                                <input type="text" id="custom-impp-title" style="-webkit-user-select: text; user-select: text;" class="w-full p-2 border border-blue-300 rounded focus:ring-blue-500 focus:border-blue-500 bg-white" placeholder="Pilih saran di atas atau ketik judul Anda sendiri...">
+                            </div>
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                                <button onclick="getImppSuggestions(true)" class="w-full sm:w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg transition-colors">Saran Lain</button>
+                                <button onclick="generateProfile('impp')" class="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Buat Profil & Simpan Acuan</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="imppel-step-2" class="step-card bg-white p-6 rounded-lg shadow-sm border-2 hidden">
-                    <h3 class="font-bold text-lg mb-3 text-emerald-600">Langkah 2: Pilih Hierarki ILP</h3>
-                    <p class="text-sm text-gray-500 mb-4">Pilih Klaster, Program, Kegiatan, hingga Sub Kegiatan spesifik tempat indikator ini akan diterapkan.</p>
-                    
-                    <div class="space-y-4 bg-gray-50 p-4 rounded-lg border">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Klaster</label>
-                            <select id="ilp-klaster" onchange="updateIlpProgram()" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"><option value="">-- Pilih Klaster --</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
-                            <select id="ilp-program" onchange="updateIlpKegiatan()" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500" disabled><option value="">-- Pilih Program --</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Kegiatan</label>
-                            <select id="ilp-kegiatan" onchange="updateIlpSubKegiatan()" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500" disabled><option value="">-- Pilih Kegiatan --</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Sub Kegiatan / Rincian Teknis</label>
-                            <select id="ilp-subkegiatan" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500" disabled><option value="">-- Pilih Sub Kegiatan --</option></select>
-                        </div>
+                <div id="imppel-workflow" class="space-y-6 hidden">
+                    <div id="imppel-step-1" class="step-card bg-white p-6 rounded-lg shadow-sm border-2">
+                        <h3 class="font-bold text-lg mb-3 text-emerald-600">Langkah 1: Konfirmasi IMPP Acuan</h3>
+                        <p class="text-sm text-gray-600 mb-3">Indikator unit (IMPPel) harus selaras dan mendukung tercapainya indikator utama (IMPP).</p>
+                        <textarea id="imppel-acuan-text" style="-webkit-user-select: text; user-select: text;" class="w-full p-3 border border-emerald-300 rounded-md font-semibold text-emerald-900 bg-emerald-50 focus:ring-emerald-500 focus:border-emerald-500" rows="3" placeholder="Belum ada IMPP yang disimpan. Ketik judul IMPP secara manual di sini..."></textarea>
+                        <button onclick="activateStep('imppel-step-2')" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Lanjutkan ke Pemilihan Hierarki ILP</button>
                     </div>
-                    <button onclick="getImppelSuggestions(false)" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Minta AI Merumuskan Judul</button>
-                </div>
 
-                <div id="imppel-step-3" class="step-card bg-white p-6 rounded-lg shadow-sm border-2 hidden">
-                    <h3 class="font-bold text-lg mb-3 text-emerald-600">Langkah 3: Pilih Judul IMPPel (Unit)</h3>
-                    <p class="text-sm text-gray-500 mb-4">Saran indikator di bawah ini dirumuskan khusus untuk kegiatan ILP yang Anda pilih agar mendukung IMPP utama.</p>
-                    <div id="imppel-suggestions-list" class="space-y-2"></div>
-                    <div id="imppel-loader" class="hidden flex justify-center items-center p-4">
-                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-emerald-600 h-10 w-10"></div><p class="ml-4 text-gray-600 font-medium">AI sedang menganalisis kaitan kegiatan dengan IMPP...</p>
-                    </div>
-                    <div class="mt-6 flex flex-col space-y-3">
-                        <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
-                            <label for="custom-imppel-title" class="block text-sm font-bold text-emerald-800 mb-1">Sesuaikan Judul Pilihan (Bisa Diedit):</label>
-                            <input type="text" id="custom-imppel-title" class="w-full p-2 border border-emerald-300 rounded focus:ring-emerald-500 focus:border-emerald-500 bg-white" placeholder="Pilih saran di atas atau ketik judul indikator unit Anda sendiri...">
+                    <div id="imppel-step-2" class="step-card bg-white p-6 rounded-lg shadow-sm border-2 hidden">
+                        <h3 class="font-bold text-lg mb-3 text-emerald-600">Langkah 2: Pilih Hierarki ILP</h3>
+                        <p class="text-sm text-gray-500 mb-4">Pilih Klaster, Program, Kegiatan, hingga Sub Kegiatan spesifik tempat indikator ini akan diterapkan.</p>
+                        
+                        <div class="space-y-4 bg-gray-50 p-4 rounded-lg border">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Klaster</label>
+                                <select id="ilp-klaster" onchange="updateIlpProgram()" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"><option value="">-- Pilih Klaster --</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Program</label>
+                                <select id="ilp-program" onchange="updateIlpKegiatan()" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500" disabled><option value="">-- Pilih Program --</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kegiatan</label>
+                                <select id="ilp-kegiatan" onchange="updateIlpSubKegiatan()" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500" disabled><option value="">-- Pilih Kegiatan --</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Sub Kegiatan / Rincian Teknis</label>
+                                <select id="ilp-subkegiatan" class="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500" disabled><option value="">-- Pilih Sub Kegiatan --</option></select>
+                            </div>
                         </div>
-                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                            <button onclick="getImppelSuggestions(true)" class="w-full sm:w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg transition-colors">Saran Lain</button>
-                            <button onclick="generateProfile('imppel')" class="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Buat Profil & Simpan ke Koleksi</button>
-                        </div>
+                        <button onclick="getImppelSuggestions(false)" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Minta AI Merumuskan Judul</button>
                     </div>
-                </div>
-            </div>
-            
-            <!-- ================= COLLECTION / FINAL PROFILE ================= -->
-            <div id="collection-step" class="step-card bg-white p-4 sm:p-6 rounded-lg shadow-sm border-2 hidden">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
-                    <h3 class="font-bold text-2xl text-blue-800 text-center sm:text-left">Koleksi Indikator Mutu Tersimpan</h3>
-                    <div class="flex gap-2">
-                        <button onclick="clearStorage()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-3 py-2 rounded-lg border border-red-300 transition">Hapus Riwayat</button>
-                        <span id="collection-count-badge" class="bg-blue-100 text-blue-800 font-bold px-4 py-2 rounded-full text-sm shadow-sm whitespace-nowrap">0 Indikator</span>
+
+                    <div id="imppel-step-3" class="step-card bg-white p-6 rounded-lg shadow-sm border-2 hidden">
+                        <h3 class="font-bold text-lg mb-3 text-emerald-600">Langkah 3: Pilih Judul IMPPel (Unit)</h3>
+                        <p class="text-sm text-gray-500 mb-4">Saran indikator di bawah ini dirumuskan khusus untuk kegiatan ILP yang Anda pilih agar mendukung IMPP utama.</p>
+                        <div id="imppel-suggestions-list" class="space-y-2"></div>
+                        <div id="imppel-loader" class="hidden flex justify-center items-center p-4">
+                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-emerald-600 h-10 w-10"></div><p class="ml-4 text-gray-600 font-medium">AI sedang menganalisis kaitan kegiatan dengan IMPP...</p>
+                        </div>
+                        <div class="mt-6 flex flex-col space-y-3">
+                            <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                                <label for="custom-imppel-title" class="block text-sm font-bold text-emerald-800 mb-1">Sesuaikan Judul Pilihan (Bisa Diedit):</label>
+                                <input type="text" id="custom-imppel-title" style="-webkit-user-select: text; user-select: text;" class="w-full p-2 border border-emerald-300 rounded focus:ring-emerald-500 focus:border-emerald-500 bg-white" placeholder="Pilih saran di atas atau ketik judul indikator unit Anda sendiri...">
+                            </div>
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                                <button onclick="getImppelSuggestions(true)" class="w-full sm:w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg transition-colors">Saran Lain</button>
+                                <button onclick="generateProfile('imppel')" class="w-full sm:w-2/3 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow">Buat Profil & Simpan ke Koleksi</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div id="profile-loader" class="hidden flex justify-center items-center p-8">
-                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-600 h-12 w-12"></div><p class="ml-4 text-gray-600 font-medium">Menyusun dokumen koleksi indikator...</p>
-                </div>
-                
-                <div id="collection-output-container" class="hidden">
-                    <div id="collection-output" class="p-2 sm:p-6 border rounded-md bg-white overflow-x-auto text-sm space-y-8 shadow-inner min-h-[300px]">
-                        <!-- Tables will be appended here -->
+                <div id="collection-step" class="step-card bg-white p-4 sm:p-6 rounded-lg shadow-sm border-2 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-4 gap-4">
+                        <h3 class="font-bold text-2xl text-blue-800 text-center sm:text-left">Koleksi Indikator Mutu Tersimpan</h3>
+                        <div class="flex gap-2">
+                            <button onclick="clearStorage()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-3 py-2 rounded-lg border border-red-300 transition">Hapus Riwayat</button>
+                            <span id="collection-count-badge" class="bg-blue-100 text-blue-800 font-bold px-4 py-2 rounded-full text-sm shadow-sm whitespace-nowrap">0 Indikator</span>
+                        </div>
                     </div>
                     
-                    <div class="mt-8 flex flex-col space-y-4">
-                        <button onclick="continueToImppel()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-2 border-emerald-400 font-bold py-3 px-4 rounded-lg transition-colors shadow-sm flex justify-center items-center text-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                            Tambah IMPPel / Unit Lainnya
-                        </button>
-                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                            <button onclick="downloadPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow flex justify-center items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                Cetak / Unduh PDF Proporsional
+                    <div id="profile-loader" class="hidden flex justify-center items-center p-8">
+                        <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-600 h-12 w-12"></div><p class="ml-4 text-gray-600 font-medium">Menyusun dokumen koleksi indikator...</p>
+                    </div>
+                    
+                    <div id="collection-output-container" class="hidden">
+                        <div id="collection-output" class="p-2 sm:p-6 border rounded-md bg-white overflow-x-auto text-sm space-y-8 shadow-inner min-h-[300px]">
+                            </div>
+                        
+                        <div class="mt-8 flex flex-col space-y-4">
+                            <button onclick="continueToImppel()" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-2 border-emerald-400 font-bold py-3 px-4 rounded-lg transition-colors shadow-sm flex justify-center items-center text-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                Tambah IMPPel / Unit Lainnya
                             </button>
-                            <button onclick="downloadTXT()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow flex justify-center items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                Simpan Teks Lengkap (.txt)
-                            </button>
+                            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                                <button onclick="downloadPDF()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow flex justify-center items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    Cetak / Unduh PDF Proporsional
+                                </button>
+                                <button onclick="downloadTXT()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow flex justify-center items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    Simpan Teks Lengkap (.txt)
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -259,6 +314,116 @@
     </div>
 
     <script>
+        // -------------------------------------------------------------------------
+        // SCRIPT GATEKEEPER (LOGIN) - URL BAPAK SUDAH DIMASUKKAN DI SINI!
+        // -------------------------------------------------------------------------
+        
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwbQWMSY9Opmkg4I29J6u-aSRXLLz5lpxRKxKOpx-oDPCLEgR1borgN8e8hAYa4aHHf/exec"; 
+
+        function toggleAuthView(view) {
+            const loginView = document.getElementById('loginFormView');
+            const regView = document.getElementById('registerFormView');
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('regMessage').classList.add('hidden');
+
+            if(view === 'register') {
+                loginView.classList.replace('translate-x-0', '-translate-x-full');
+                regView.classList.replace('translate-x-full', 'translate-x-0');
+            } else {
+                regView.classList.replace('translate-x-0', 'translate-x-full');
+                loginView.classList.replace('-translate-x-full', 'translate-x-0');
+            }
+        }
+
+        async function verifyLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const btn = document.getElementById('btnLogin');
+            const err = document.getElementById('loginError');
+
+            if(!email || !password) {
+                err.innerText = "Email dan Password wajib diisi!"; err.classList.remove('hidden'); return;
+            }
+
+            btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Memeriksa...`;
+            btn.disabled = true; err.classList.add('hidden');
+
+            try {
+                // Tembak API ke Google Script
+                const response = await fetch(`${GAS_URL}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+                const result = await response.json();
+
+                if(result.status === 'success') {
+                    // Buka Tirai
+                    document.getElementById('loginOverlay').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loginOverlay').classList.add('hidden');
+                        const app = document.getElementById('mainAppWrapper');
+                        app.classList.remove('hidden');
+                        void app.offsetWidth;
+                        app.classList.remove('opacity-0');
+                        
+                        document.getElementById('displayUserName').innerText = result.name;
+                        if(result.sisaHari) document.getElementById('displaySisaHari').innerText = `${result.sisaHari} Hari`;
+                    }, 500);
+                } else {
+                    err.innerText = result.message || "Akses Ditolak"; err.classList.remove('hidden');
+                }
+            } catch (error) {
+                err.innerText = "Koneksi gagal. Pastikan URL GAS sudah benar dan internet stabil."; err.classList.remove('hidden');
+            } finally {
+                btn.innerHTML = `<i class="fas fa-sign-in-alt"></i> Masuk Aplikasi`; btn.disabled = false;
+            }
+        }
+
+        async function registerAccount() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const btn = document.getElementById('btnRegister');
+            const msg = document.getElementById('regMessage');
+
+            msg.className = "text-[11px] mt-3 py-2 px-2 rounded font-medium block"; // reset class
+
+            if(!name || !email || !password || password.length < 6) {
+                msg.innerText = "Lengkapi data. Password min 6 karakter.";
+                msg.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100'); return;
+            }
+
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`;
+            btn.disabled = true; msg.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=register&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`);
+                const result = await response.json();
+
+                if(result.status === 'success') {
+                    msg.innerText = result.message;
+                    msg.classList.add('bg-green-50', 'text-green-700', 'border', 'border-green-200', 'font-bold');
+                    document.getElementById('regName').value = ''; document.getElementById('regEmail').value = ''; document.getElementById('regPassword').value = '';
+                } else {
+                    msg.innerText = result.message;
+                    msg.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100');
+                }
+            } catch (error) {
+                msg.innerText = "Gagal terhubung.";
+                msg.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100');
+            } finally {
+                btn.innerHTML = `<i class="fas fa-paper-plane"></i> Kirim Pengajuan`; btn.disabled = false;
+            }
+        }
+        
+        // Anti klik kanan untuk proteksi dasar
+        document.addEventListener('contextmenu', event => {
+            if (event.target.closest('.no-select')) {
+                event.preventDefault();
+            }
+        });
+
+        // -------------------------------------------------------------------------
+        // SCRIPT APLIKASI UTAMA (GENERATOR IMPP)
+        // -------------------------------------------------------------------------
+
         // Database Hierarki ILP Berdasarkan File PDF
         const ilpDatabase = {
             "KLASTER 1: MANAJEMEN": {
@@ -476,28 +641,23 @@
             }
         };
 
-        // State & Variabel Global dengan Local Storage
         let userApiKey = '';
-        let activeModel = 'gemini-1.5-flash'; // Default awal
+        let activeModel = 'gemini-1.5-flash'; 
         let savedImppContext = { title: "", detail: "", html: "" }; 
         let imppelCollection = []; 
         let imppInputState = { category: "", description: "" };
 
-        // Muat data dari penyimpanan saat halaman dimuat
         window.onload = () => {
             loadFromStorage();
-            
             if (userApiKey) {
                 document.getElementById('api-key-input').value = userApiKey;
                 document.getElementById('active-model-display').innerText = activeModel;
             }
-
             document.getElementById('selection-screen').classList.remove('hidden');
             document.getElementById('workflow-container').classList.add('hidden');
             updateCounters();
         };
 
-        // --- LOCAL STORAGE UTILITIES ---
         function loadFromStorage() {
             const storedKey = localStorage.getItem('ilp_api_key');
             if (storedKey) userApiKey = storedKey;
@@ -518,7 +678,6 @@
             updateCounters();
         }
 
-        // --- AUTO-DISCOVER MODEL & SAVE KEY ---
         async function saveApiKey() {
             const key = document.getElementById('api-key-input').value;
             if (!key.trim()) {
@@ -532,13 +691,10 @@
             document.getElementById('active-model-display').innerText = 'Mencari model terbaik...';
 
             try {
-                // Auto-Discover: Tarik semua model yang tersedia untuk API Key ini
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key.trim()}`);
                 if (!response.ok) throw new Error("API Key tidak valid atau terblokir.");
                 
                 const data = await response.json();
-                
-                // Filter model yang bisa generate text & buatan gemini
                 const validModels = data.models.filter(m => 
                     m.supportedGenerationMethods && 
                     m.supportedGenerationMethods.includes("generateContent") && 
@@ -547,7 +703,6 @@
                 
                 if(validModels.length === 0) throw new Error("Tidak ditemukan model yang kompatibel.");
                 
-                // Prioritas: 1.5-flash -> flash -> 1.5-pro -> apa saja yang ada
                 let selected = validModels.find(m => m.name.includes('1.5-flash')) || 
                                validModels.find(m => m.name.includes('flash')) || 
                                validModels.find(m => m.name.includes('pro')) || 
@@ -564,7 +719,6 @@
                 document.getElementById('active-model-display').innerText = activeModel;
                 
                 setTimeout(() => { statusEl.classList.add('hidden'); }, 3000);
-                
             } catch (err) {
                 statusEl.textContent = `Error: ${err.message}`;
                 statusEl.className = 'text-xs mt-2 text-red-600 font-bold text-right block';
@@ -573,7 +727,6 @@
             }
         }
 
-        // Auto-heal function jika saat proses ternyata model 404
         async function autoDetectModelFallback() {
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${userApiKey}`);
@@ -588,7 +741,7 @@
                     return activeModel;
                 }
             } catch (e) {}
-            return 'gemini-1.5-flash'; // absolute fallback
+            return 'gemini-1.5-flash';
         }
 
         function clearStorage() {
@@ -615,7 +768,6 @@
             }
         }
 
-        // --- UPLOAD FILE (PDF & TXT) DENGAN HIDDEN JSON STATE ---
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -623,7 +775,6 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const content = e.target.result;
-                
                 const stateMatch = content.match(/###ILP_SAVE_DATA_START###\n(.*?)\n###ILP_SAVE_DATA_END###/s);
                 
                 if (stateMatch) {
@@ -635,7 +786,6 @@
                         showModal("File berhasil diunggah! Koleksi dan urutan indikator mutu Anda telah dipulihkan.");
                         showCollection();
                     } catch (err) {
-                        console.error(err);
                         showModal("Gagal memulihkan data: Format data di dalam file tersebut rusak.");
                     }
                 } 
@@ -645,10 +795,8 @@
                 else {
                     showModal("File PDF ini adalah versi lama (atau tidak mengandung data pintar). Silakan unggah file '.txt' riwayat Anda atau buat profil baru untuk mendapatkan fitur pemulihan PDF pintar.");
                 }
-                
                 event.target.value = ''; 
             };
-            
             reader.readAsText(file);
         }
 
@@ -716,17 +864,14 @@
                 saveToStorage();
                 showModal("File TXT versi lama berhasil diunggah dan dipulihkan!");
                 showCollection();
-                
             } catch (err) {
-                console.error(err);
                 showModal("Gagal membaca isi file. Pastikan Anda mengunggah file yang tepat.");
             }
         }
 
-        // Modal Custom
         function showModal(message) {
             const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[10000] p-4';
             modal.innerHTML = `
                 <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
                     <h3 class="text-lg font-bold text-gray-900 mb-2 border-b pb-2">Pemberitahuan</h3>
@@ -778,7 +923,6 @@
             }
         }
 
-        // --- ILP DROPDOWN LOGIC ---
         function initIlpDropdowns() {
             const klasterSel = document.getElementById('ilp-klaster');
             klasterSel.innerHTML = '<option value="">-- Pilih Klaster --</option>';
@@ -843,7 +987,6 @@
             sel.disabled = true;
         }
 
-        // --- GEMINI API CALL (Koneksi AI Dinamis) ---
         async function callGeminiAPI(prompt, isJson = true) {
             if (!userApiKey) {
                 showModal('API Key belum diatur. Silakan masukkan API Key Anda di bagian atas Menu Utama sebelum melanjutkan.');
@@ -859,9 +1002,7 @@
 
             for (let i = 0; i <= maxRetries; i++) {
                 try {
-                    // Gunakan activeModel yang ada di memori
                     let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${userApiKey}`;
-                    
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -872,8 +1013,6 @@
                         if (response.status === 429) throw new Error("Kuota API habis (Too Many Requests)");
                         if (response.status === 400) throw new Error("API Key tidak valid atau Format Salah");
                         if (response.status === 404) {
-                            // Model 404 -> Mulai proses Auto-Healing (Deteksi model baru secara diam-diam)
-                            console.warn(`Model ${activeModel} tidak ditemukan (404). Mencari alternatif...`);
                             await autoDetectModelFallback(); 
                             throw new Error("Sistem mengganti model karena versi lama tidak ditemukan, mencoba lagi...");
                         }
@@ -888,7 +1027,6 @@
                     throw new Error("Tidak ada respon konten dari AI.");
                 } catch (error) {
                     if (i === maxRetries) {
-                        console.error("Error AI:", error);
                         showModal(`Gagal terhubung dengan AI (${error.message}). <br><br><b>Saran:</b> Pastikan koneksi internet stabil. Jika kuota API habis, silakan ganti API Key Anda.`);
                         return null;
                     }
@@ -897,7 +1035,6 @@
             }
         }
 
-        // --- LOGIC IMPP (MAKRO) ---
         async function getImppSuggestions(isRegeneration = false) {
             if (!isRegeneration) {
                 const category = document.querySelector('input[name="priority_category"]:checked');
@@ -936,7 +1073,6 @@
             }
         }
 
-        // --- LOGIC IMPPel (UNIT/ILP) ---
         async function getImppelSuggestions(isRegeneration = false) {
             const klaster = document.getElementById('ilp-klaster').value;
             const program = document.getElementById('ilp-program').value;
@@ -984,7 +1120,6 @@
             }
         }
 
-        // --- PROFILE GENERATION ---
         async function generateProfile(type) {
             let finalTitle = "";
             let contextStr = "";
@@ -1056,17 +1191,15 @@
                     imppelCollection.push({ title: finalTitle, html: cleanHtml });
                 }
 
-                saveToStorage(); // Simpan ke LocalStorage otomatis
+                saveToStorage(); 
                 renderCollection();
                 document.getElementById('collection-step').scrollIntoView({ behavior: 'smooth' });
-                
             } else {
                 showModal('Gagal menyusun profil indikator dari AI. Silakan coba klik tombol Buat Profil kembali.');
                 profileContainer.classList.remove('hidden');
             }
         }
 
-        // --- KOLEKSI (COLLECTION) UTILITIES ---
         function renderCollection() {
             const container = document.getElementById('collection-output');
             container.innerHTML = '';
@@ -1141,11 +1274,8 @@
             document.getElementById('workflow-title').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // --- FITUR DOWNLOAD PDF (NATIVE, VECTOR) DAN TEKS ---
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            
-            // Generate PDF berbasis Vektor/Teks (Bukan Gambar, Ukuran sangat kecil dan presisi seperti kertas A4)
             const doc = new jsPDF('p', 'pt', 'a4');
             
             doc.setFontSize(14);
@@ -1168,7 +1298,6 @@
                 doc.setFont("helvetica", "bold");
                 doc.text(headerText, 40, currentY);
                 
-                // Gunakan AutoTable untuk render HTML Table menjadi Text PDF Murni
                 doc.autoTable({
                     html: table,
                     startY: currentY + 15,
@@ -1185,32 +1314,25 @@
                         fontStyle: 'bold'
                     },
                     columnStyles: {
-                        0: { cellWidth: 120, fontStyle: 'bold' } // Kolom header sebelah kiri (fixed width)
+                        0: { cellWidth: 120, fontStyle: 'bold' } 
                     },
                     margin: { left: 40, right: 40 }
                 });
                 
                 currentY = doc.lastAutoTable.finalY + 30;
                 
-                // Pindah halaman jika sudah mendekati batas bawah A4
                 if (currentY > 750 && index < tables.length - 1) {
                     doc.addPage();
                     currentY = 40;
                 }
             });
 
-            // 1. Ekstrak output PDF ke dalam Blob
             const pdfBlob = doc.output('blob');
-            
-            // 2. Siapkan State Aplikasi agar PDF ini menjadi "PDF Pintar" yang bisa diupload lagi
             const appState = { impp: savedImppContext, imppel: imppelCollection };
             const hiddenDataStr = "\n###ILP_SAVE_DATA_START###\n" + JSON.stringify(appState) + "\n###ILP_SAVE_DATA_END###\n";
             const hiddenDataBlob = new Blob([hiddenDataStr], { type: 'text/plain' });
-            
-            // 3. Gabungkan Blob PDF asli dengan Metadata tersembunyi
             const finalBlob = new Blob([pdfBlob, hiddenDataBlob], { type: 'application/pdf' });
             
-            // 4. Unduh dengan nama baku
             const url = URL.createObjectURL(finalBlob);
             const a = document.createElement('a');
             a.href = url;
